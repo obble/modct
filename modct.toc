@@ -2,7 +2,6 @@
 ## Author: modernist
 ## Title: mod ct
 ## Notes: combat text mod.
-## Dependencies: modui
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_CombatText
 ct.lua
