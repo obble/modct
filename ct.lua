@@ -47,6 +47,14 @@
             APPEND = { '- ', '' },  -- - DEBUFF
             [' fades'] = '',
         },
+        ['ENTERING_COMBAT'] = {
+            APPEND = { '+ ', '' },  -- + COMBAT
+            ['Entering '] = '',
+        },
+        ['LEAVING_COMBAT'] = {
+            APPEND = { '- ', '' },  -- - COMBAT
+            ['Leaving '] = '',
+        },
     }
 
     function modCT:ApplyOverrides()
