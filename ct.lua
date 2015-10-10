@@ -151,7 +151,7 @@
 
     function CombatText_OnUpdate(e)
         orig.CombatText_OnUpdate(e)
-        for i,v in pairs(COMBAT_TEXT_TO_ANIMATE) do
+        for i,v in COMBAT_TEXT_TO_ANIMATE do
             if v.scrollTime >= COMBAT_TEXT_SCROLLSPEED then
                 CombatText_RemoveMessage(v)
                 if v.modType then v.modType = nil end
