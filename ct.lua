@@ -81,7 +81,7 @@
         return msg
     end
 
-    function modCT:Cutcut(msg, msgType)
+    function modCT:cutcut(msg, msgType)
         for k,v in pairs(textsubs['*']) do msg = logic(msg, k, v) end
         if textsubs[msgType] then
             for k,v in pairs(textsubs[msgType]) do msg = logic(msg, k, v) end
@@ -90,10 +90,6 @@
     end
 
     modCT:ApplyOverrides()
-
-    local f = _G['CombatText']:CreateFontString('CombatTextCrit', 'BACKGROUND', 'CombatTextTemplate')
-    local font = _G['GameFontNormalHuge']
-    f:SetFontObject(font)
 
     orig.CombatText_AddMessage = CombatText_AddMessage
     orig.CombatText_OnEvent = CombatText_OnEvent
@@ -145,7 +141,7 @@
     end
 
     function CombatText_AddMessage(msg, scrollFunction, r, g, b, displayType, isStaggered)
-        local msg = modCT:Cutcut(msg, msgType)
+        local msg = modCT:cutcut(msg, msgType)
         orig.CombatText_AddMessage(msg, scrollFunction, r, g, b, displayType, isStaggered)
     end
 
