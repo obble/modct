@@ -8,13 +8,24 @@
     COMBAT_TEXT_CRIT_MAXHEIGHT = 30     -- CRIT SIZE MAX
     COMBAT_TEXT_CRIT_MINHEIGHT = 20     -- CRIT SIZE MIN
 
-    local offset = 222                  -- X OFFSET FOR TEXT
+    COMBAT_TEXT_TYPE_INFO['OUTGOING_DMG']     = {r = .45, g = .1, b = .65, show = 1}
+    COMBAT_TEXT_TYPE_INFO['OUTGOING_HEALING'] = {r = .1,  g = .7, b = .65, show = 1}
 
+    CombatText:RegisterEvent'CHAT_MSG_SPELL_SELF_BUFF'
+    CombatText:RegisterEvent'CHAT_MSG_SPELL_SELF_DAMAGE'
+
+    local offset = 222                  -- X OFFSET FOR TEXT
     local _G = getfenv(0)
     local gsub = string.gsub
     local modCT = CreateFrame'Frame'
     local orig = {}
-    local msgType, dspType, modType
+    local msgType, dspType, modType, message, info
+
+    orig.CombatText_UpdateDisplayedMessages = CombatText_UpdateDisplayedMessages
+    orig.CombatText_AddMessage              = CombatText_AddMessage
+    orig.CombatText_OnEvent                 = CombatText_OnEvent
+    orig.CombatText_GetAvailableString      = CombatText_GetAvailableString
+    orig.CombatText_OnUpdate                = CombatText_OnUpdate
 
     for i = 1, 20 do
         local f = _G['CombatText'..i]
@@ -30,8 +41,8 @@
 
     local textsubs = {
         ['*'] = {
-            ['<'] = '',             -- STRIP BRACKETS
-            ['>'] = '',
+            ['<'] = '',
+            ['>'] = '',             -- STRIP BRACKETS
         },
         ['AURA_START'] = {
             APPEND = { '+ ', '' },  -- + BUFF
@@ -54,6 +65,12 @@
         ['LEAVING_COMBAT'] = {
             APPEND = { '- ', '' },  -- - COMBAT
             ['Leaving '] = '',
+        },
+        ['OUTGOING_DMG'] = {
+            APPEND = { '>> ', '' },  -- >> DAMAGE
+        },
+        ['OUTGOING_HEALING'] = {
+            APPEND = { '+> ', '' },  -- +> HEAL
         },
     }
 
@@ -91,11 +108,6 @@
 
     modCT:ApplyOverrides()
 
-    orig.CombatText_AddMessage = CombatText_AddMessage
-    orig.CombatText_OnEvent = CombatText_OnEvent
-    orig.CombatText_GetAvailableString = CombatText_GetAvailableString
-    orig.CombatText_OnUpdate = CombatText_OnUpdate
-
     function CombatText_OnEvent(event)
         if event == 'UNIT_HEALTH' then
         	msgType = 'HEALTH_LOW'
@@ -107,8 +119,26 @@
         	msgType = 'LEAVING_COMBAT'
         elseif event == 'PLAYER_COMBO_POINTS' then
         	msgType = 'COMBO_POINTS'
+        elseif event == 'CHAT_MSG_SPELL_SELF_DAMAGE' then
+            local h = 'Your (.+) hits (.+) for (.+)'  local hit  = string.find(arg1, h)
+            local c = 'Your (.+) crits (.+) for (.+)' local crit = string.find(arg1, c)
+            if fhit or fcrit or fabsb then
+                local m = hit and h or crit and c
+    			arg2 = gsub(arg1, m, '%3') arg2 = gsub(arg2, '(.+) (.+) damage.', '%1')
+                msgType = 'OUTGOING_DMG'
+            end
+        elseif event == 'CHAT_MSG_SPELL_SELF_BUFF' then
+            local h   = 'Your (.+) heals (.+) for (.+).'
+            local c   = 'Your (.+) critically heals (.+) for (.+).'
+            local hot = '(.+) gains (.+) health from your (.+).'
+            if string.find(arg1, h) or string.find(arg1, c) then
+                arg2 = gsub(arg1, h, '%3 — %2')
+                if string.find(arg2, '(.+) — you') then return end
+                msgType = 'OUTGOING_HEALING'
+            end
         elseif event == 'COMBAT_TEXT_UPDATE' then
         	msgType = arg1
+            -- print(arg1..'  '..arg2)
         else
         	msgType = event
         end
@@ -122,7 +152,8 @@
             or msgType == 'FACTION'
             or msgType == 'HONOR_GAINED'
             or msgType == 'SPELL_ACTIVE'
-            or msgType == 'COMBO_POINTS' then
+            or msgType == 'COMBO_POINTS'
+            or msgType == 'OUTGOING_DMG' or msgType == 'OUTGOING_HEALING' then
             dspType = 'plus'
         elseif msgType == 'LEAVING_COMBAT'
             or msgType == 'DAMAGE_CRIT'
@@ -135,6 +166,19 @@
             dspType = 'minus'
         else
             -- dspType = 'plus'
+        end
+
+        if msgType == 'OUTGOING_DMG' then
+            info = COMBAT_TEXT_TYPE_INFO['OUTGOING_DMG']
+            message = arg2
+        elseif msgType == 'OUTGOING_HEALING' then
+            info = COMBAT_TEXT_TYPE_INFO['OUTGOING_HEALING']
+            message = arg2
+        end
+
+        if message then
+        	CombatText_AddMessage(message, COMBAT_TEXT_SCROLL_FUNCTION, info.r, info.g, info.b, dspType, isStaggered)
+            message = nil info = nil
         end
 
         orig.CombatText_OnEvent(event)
@@ -173,7 +217,6 @@
         end
     end
 
-
     function CombatText_GetAvailableString()
         for i = 1, NUM_COMBAT_TEXT_LINES do
 		    local string = getglobal('CombatText'..i)
@@ -182,6 +225,17 @@
         if dspType == 'crit' then
             local string = getglobal'CombatTextCrit' return string
         else return orig.CombatText_GetAvailableString() end
+    end
+
+    function CombatText_UpdateDisplayedMessages()
+        orig.CombatText_UpdateDisplayedMessages()
+        if SHOW_COMBAT_TEXT == '0' then
+            CombatText:UnregisterEvent'CHAT_MSG_SPELL_SELF_BUFF'
+            CombatText:UnregisterEvent'CHAT_MSG_SPELL_SELF_DAMAGE'
+        else
+            CombatText:RegisterEvent'CHAT_MSG_SPELL_SELF_BUFF'
+            CombatText:RegisterEvent'CHAT_MSG_SPELL_SELF_DAMAGE'
+        end
     end
 
     --
