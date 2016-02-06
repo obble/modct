@@ -8,8 +8,8 @@
     COMBAT_TEXT_CRIT_MAXHEIGHT = 30     -- CRIT SIZE MAX
     COMBAT_TEXT_CRIT_MINHEIGHT = 20     -- CRIT SIZE MIN
 
-    COMBAT_TEXT_TYPE_INFO['OUTGOING_DMG']     = {r = .45, g = .1, b = .65, show = 1}
-    COMBAT_TEXT_TYPE_INFO['OUTGOING_HEALING'] = {r = .1,  g = .7, b = .65, show = 1}
+    COMBAT_TEXT_TYPE_INFO['OUTGOING_DMG']     = {r = .9, g = .7, b = .1,  show = 1}
+    COMBAT_TEXT_TYPE_INFO['OUTGOING_HEALING'] = {r = .1, g = .7, b = .65, show = 1}
 
     CombatText:RegisterEvent'CHAT_MSG_SPELL_SELF_BUFF'
     CombatText:RegisterEvent'CHAT_MSG_SPELL_SELF_DAMAGE'
@@ -122,7 +122,7 @@
         elseif event == 'CHAT_MSG_SPELL_SELF_DAMAGE' then
             local h = 'Your (.+) hits (.+) for (.+)'  local hit  = string.find(arg1, h)
             local c = 'Your (.+) crits (.+) for (.+)' local crit = string.find(arg1, c)
-            if fhit or fcrit or fabsb then
+            if hit or crit then
                 local m = hit and h or crit and c
     			arg2 = gsub(arg1, m, '%3') arg2 = gsub(arg2, '(.+) (.+) damage.', '%1')
                 msgType = 'OUTGOING_DMG'
@@ -133,7 +133,7 @@
             local hot = '(.+) gains (.+) health from your (.+).'
             if string.find(arg1, h) or string.find(arg1, c) then
                 arg2 = gsub(arg1, h, '%3 — %2')
-                if string.find(arg2, '(.+) — you') then return end
+                -- if string.find(arg2, '(.+) — you') then return end
                 msgType = 'OUTGOING_HEALING'
             end
         elseif event == 'COMBAT_TEXT_UPDATE' then
